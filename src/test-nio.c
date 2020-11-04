@@ -1,12 +1,15 @@
-#pragma target(atarixl)
-#pragma encoding(atascii)
-#pragma zp_reserve(0x00..0x7f)
+#pragma target(atariio)
+#pragma pc(0x0600)
 
 #include <stdint.h>
 #include "atari-nio.h"
+#include "conio.h"
 
 void main() {
-	uint8_t *OUT = 0x8000;
-	uint8_t r = nopen("spec", 'W');
-	*(OUT) = r;
+	char url[256]; 
+	print("NETCAT--N: DEVICESPEC?\n");
+	get_line(url,128);
+	print(url);
+
+	for(;;) ;
 }

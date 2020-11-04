@@ -4,7 +4,7 @@
 
 #include "atari-nio.h"
 #include "atari-sio.h"
-#include "atari-os.h"
+#include "atari-mem.h"
 
 #include "stddef.h"
 

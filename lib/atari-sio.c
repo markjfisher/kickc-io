@@ -1,4 +1,5 @@
 #include "atari-mem.h"
+#include "atari-sio.h"
 
 void siov() {
 	asm(clobbers "AXY") {

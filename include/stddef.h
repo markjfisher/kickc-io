@@ -10,10 +10,11 @@ typedef int ptrdiff_t;
 #define _HAVE_wchar_t
 typedef char wchar_t;
 #endif
-#ifndef _HAVE_size_t
-#define _HAVE_size_t
-typedef unsigned size_t;
-#endif
+
+//#ifndef _HAVE_size_t
+//#define _HAVE_size_t
+//typedef unsigned size_t;
+//#endif
 
 /* NULL pointer */
 #ifndef _HAVE_NULL

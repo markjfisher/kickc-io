@@ -64,9 +64,3 @@ struct __dcb {
 };
 
 typedef struct __dcb dcb_t;
-
-// Substitute for various OS.xxx as we aren't defining the entire OS struct
-#define OS_dcb (*(struct __dcb*) 0x300)
-
-unsigned char * OS_dvstat = 0x2EA;
-// #define OS_dvstat (*(unsigned char*) 0x2EA)
