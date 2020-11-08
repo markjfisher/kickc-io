@@ -5,20 +5,27 @@
 #ifndef NIO_H
 #define NIO_H
 
+#include <stdint.h>
+
+#define FUJI_READ 0x04
+#define FUJI_WRITE 0x08
+#define FUJI_APPEND ((FUJI_READ) | (FUJI_WRITE))
+
 /**
  * Open N: device with devicespec
  * @param devicespec - an N: device spec, e.g. N:TCP://FOO.COM:1234/
+ * @param mode - 12 = R/W, 8 = write, 4 = read
  * @param translation mode, 0=none, 1=cr, 2=lf, 3=cr/lf
  * @return error code, or 1 if successful.
  */
-unsigned char nopen(char* devicespec, unsigned char trans);
+uint8_t nopen(uint8_t* devicespec, uint8_t mode, uint8_t trans);
 
 /**
  * Close N: device with devicespec
  * @param devicespec - an N: device spec to close (the unit number is extracted)
  * @return error code, or 1 if successful.
  */
-unsigned char nclose(char* devicespec);
+uint8_t nclose(uint8_t* devicespec);
 
 /**
  * Get status of specific N: device
@@ -32,7 +39,7 @@ unsigned char nclose(char* devicespec);
  * OS.dcb.dvstat[2] = reserved
  * OS.dcb.dvstat[3] = Error code of last I/O operation. !1 = error.
  */
-unsigned char nstatus(char* devicespec);
+uint8_t nstatus(uint8_t* devicespec);
 
 /**
  * Read # of bytes from specific N: device.
@@ -41,7 +48,7 @@ unsigned char nstatus(char* devicespec);
  * @param len - The # of bytes to read (up to 65535)
  * @return error code, or 1 if successful, buf is filled with data.
  */
-unsigned char nread(char* devicespec, unsigned char* buf, unsigned short len);
+uint8_t nread(uint8_t* devicespec, uint8_t* buf, uint16_t len);
 
 /**
  * Write # of bytes to specific N: device.
@@ -50,6 +57,6 @@ unsigned char nread(char* devicespec, unsigned char* buf, unsigned short len);
  * @param len - The # of bytes to write (up to 65535)
  * @return error code, or 1 if successful, buf is filled with data.
  */
-unsigned char nwrite(char* devicespec, unsigned char* buf, unsigned short len);
+uint8_t nwrite(uint8_t* devicespec, uint8_t* buf, uint16_t len);
 
 #endif /* NIO_H */
