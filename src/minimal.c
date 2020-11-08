@@ -23,84 +23,28 @@ char const * DAUX2  = 0x030B;
 
 char const * PACTL  = 0xD302;
 
+char const * DCB_ADD = 0x0300;
+
 // Debug output memory address
 char const * OUT    = 0x3000;
 
 // our flag for data
 volatile char trip = 0;
 
+char *url = "N:TNFS://192.168.1.97/test2.txt";
+// char *url = "N:HTTPS://API.IPIFY.ORG/";
+// char *url = "N:TCP://BBS.FOZZTEXX.NET/";
+
+char trans = 3;
+char result;
+char buf[16];
+word dataLen;
+word prevV;
+
 void main() {
-	word prevV;
-	// char *url = "N:TCP://BBS.FOZZTEXX.NET/";
-	char *url = "N:TNFS://192.168.1.97/test1.txt";
-	// char *url = "N:HTTPS://API.IPIFY.ORG/";
-	char trans = 0; // No translation
-	char result;
-	char buf[16];
+	clearOut();
+	nio();
 
-	// Done the direct way
-	// Open, assuming unit = 1
-	*DDEVIC = 0x71;
-	*DUNIT  = 1;
-	*DCOMND = 'O';
-	*DSTATS = 0x80;
-	*DBUF   = <url;
-	*(DBUF+1) = >url;
-	*DTIMLO = 0x1f;
-	*DBYT   = 256;
-	*DAUX1  = 4; // R
-	*DAUX2  = trans;
-	sio();
-
-	*OUT = *DSTATS;
-	print("open direct\n"); print_stat(); print("\n");
-	
-	// Close
-	*DDEVIC = 0x71;
-	*DUNIT  = 1;
-	*DCOMND = 'C';
-	*DSTATS = 0x00;
-	*DBUF   = 0;
-	*DTIMLO = 0x1F;
-	*DBYT   = 0;
-	*DAUX1  = 0;
-	*DAUX2  = 0;
-	sio();
-
-	*(OUT+1) = *DSTATS;
-	print("close direct\n"); print_stat(); print("\n");
-	
-	// Open it using dcb block
-	OS_dcb.ddevic = 0x71;
-	OS_dcb.dunit  = 1;
-	OS_dcb.dcomnd = 'O';
-	OS_dcb.dstats = 0x80;
-	OS_dcb.dbuf   = url;
-	OS_dcb.dtimlo = 0x1f;
-	OS_dcb.dbyt   = 0x100;
-	OS_dcb.daux1  = 12;
-	OS_dcb.daux2  = trans;
-	sio();
-
-	*(OUT+2) = OS_dcb.dstats;
-	print("open dcb\n"); print_stat(); print("\n");
-
-	// Close it using dcb block
-	OS_dcb.ddevic = 0x71;
-	OS_dcb.dunit  = 1;
-	OS_dcb.dcomnd = 'C';
-	OS_dcb.dstats = 0x00;
-	OS_dcb.dbuf   = 0;
-	OS_dcb.dtimlo = 0x1f;
-	OS_dcb.dbyt   = 0;
-	OS_dcb.daux1  = 0;
-	OS_dcb.daux2  = 0;
-	sio();
-
-	*(OUT+3) = OS_dcb.dstats;
-	print("close dcb\n"); print_stat(); print("\n");
-
-	// Now do it with nio routines
 	//result = nopen(url, 12, trans);
 	//print_stat(); print("\n");
 	//if (result != 1) {
@@ -123,13 +67,22 @@ void main() {
 	//result = nclose(url);
 }
 
-void print_stat() {
-	uint8_t tmp[8];
-	print("dv ");
-	uctoa(OS_dvstat[0], tmp, 16); print("0:$"); print(tmp); print(" ");
-	uctoa(OS_dvstat[1], tmp, 16); print("1:$"); print(tmp); print(" ");
-	uctoa(OS_dvstat[2], tmp, 16); print("2:$"); print(tmp); print(" ");
-	uctoa(OS_dvstat[3], tmp, 16); print("3:$"); print(tmp); print(" ");
+void hex(char *name, char *add) {
+	uint8_t tmp[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	print(name); print(" ");
+	uctoa(add[0], tmp, 16); print("0:$"); print(tmp); print(" ");
+	uctoa(add[1], tmp, 16); print("1:$"); print(tmp); print(" ");
+	uctoa(add[2], tmp, 16); print("2:$"); print(tmp); print(" ");
+	uctoa(add[3], tmp, 16); print("3:$"); print(tmp); print("\n");
+	//print(name); print(" ");
+	//uctoa(add[4], tmp, 16); print("4:$"); print(tmp); print(" ");
+	//uctoa(add[5], tmp, 16); print("5:$"); print(tmp); print(" ");
+	//uctoa(add[6], tmp, 16); print("6:$"); print(tmp); print(" ");
+	//uctoa(add[7], tmp, 16); print("7:$"); print(tmp); print("\n");
+}
+
+void clearOut() {
+	for(uint16_t i = 0; i < 0x2000; i++) *(OUT + i) = 0;
 }
 
 inline void sio() {
@@ -139,11 +92,165 @@ inline void sio() {
 }
 
 void print_error(uint8_t err) {
-	uint8_t tmp[8];
+	uint8_t tmp[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	uctoa(err, tmp, 10);
 	print(tmp);
 	print("\n");
+}
+
+void nio() {
+	print("nio\n");
+	result = nopen(url, 4, trans);
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+	result = nstatus(url);
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+	dataLen = *((word *) OS_dvstat);
+	result = nread(url, OUT, dataLen);
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+	print("out: "); printl(OUT, dataLen); print("\n");
+
+	result = nclose(url);
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+}
+
+void direct() {
+	//////////////////////////////////////////////////////
+	// DIRECT
+	//////////////////////////////////////////////////////
+
+	print("direct\n");
+	//////////////////////////////////////////////////////
+	// Done the direct way
+	// Open, assuming unit = 1
+	*DDEVIC = 0x71;
+	*DUNIT  = 1;
+	*DCOMND = 'O';
+	*DSTATS = 0x80;
+	*DBUF   = <url;
+	*(DBUF+1) = >url;
+	*DTIMLO = 0x1f;
+	*DBYT   = 256;
+	*DAUX1  = 4; // R
+	*DAUX2  = trans;
+	sio();
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+	//////////////////////////////////////////////////////
+	// Status
+	*DDEVIC = 0x71;
+	*DUNIT  = 1;
+	*DCOMND = 'S';
+	*DSTATS = 0x40;
+	*DBUF   = <OS_dvstat;
+	*(DBUF+1) = >OS_dvstat;
+	*DTIMLO = 0x1F;
+	*DBYT   = 4;
+	*DAUX1  = 0;
+	*DAUX2  = 0;
+	sio();
+
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+	//////////////////////////////////////////////////////
+	// Close
+	*DDEVIC = 0x71;
+	*DUNIT  = 1;
+	*DCOMND = 'C';
+	*DSTATS = 0x00;
+	*DBUF   = 0;
+	*DTIMLO = 0x1F;
+	*DBYT   = 0;
+	*DAUX1  = 0;
+	*DAUX2  = 0;
+	sio();
+
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+}
+
+void dcb() {
+	//////////////////////////////////////////////////////
+	// OS DCB
+	//////////////////////////////////////////////////////
+	
+	//////////////////////////////////////////////////////
+	// Open it using dcb block
+	OS_dcb.ddevic = 0x71;
+	OS_dcb.dunit  = 1;
+	OS_dcb.dcomnd = 'O';
+	OS_dcb.dstats = 0x80;
+	OS_dcb.dbuf   = url;
+	OS_dcb.dtimlo = 0x1f;
+	OS_dcb.dbyt   = 0x100;
+	OS_dcb.daux1  = 12;
+	OS_dcb.daux2  = trans;
+	sio();
+
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+	//////////////////////////////////////////////////////
+	// Status
+	OS_dcb.ddevic = 0x71;
+	OS_dcb.dunit  = 1;
+	OS_dcb.dcomnd = 'S';
+	OS_dcb.dstats = 0x40;
+	OS_dcb.dbuf   = OS_dvstat;
+	OS_dcb.dtimlo = 0x1f;
+	OS_dcb.dbyt   = 4;
+	OS_dcb.daux1  = 0;
+	OS_dcb.daux2  = 0;
+	sio();
+
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
+	//////////////////////////////////////////////////////
+	// Read
+	dataLen = *((word *) OS_dvstat);
+
+	OS_dcb.ddevic = 0x71;
+	OS_dcb.dunit  = 1;
+	OS_dcb.dcomnd = 'R';
+	OS_dcb.dstats = 0x40;
+	OS_dcb.dbuf   = OUT;
+	OS_dcb.dtimlo = 0x1f;
+	OS_dcb.dbyt   = dataLen;
+	OS_dcb.daux1  = <dataLen;
+	OS_dcb.daux2  = >dataLen;
+	sio();
+
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+	print("out: "); printl(OUT, dataLen); print("\n");
+
+	//////////////////////////////////////////////////////
+	// Close it using dcb block
+	OS_dcb.ddevic = 0x71;
+	OS_dcb.dunit  = 1;
+	OS_dcb.dcomnd = 'C';
+	OS_dcb.dstats = 0x00;
+	OS_dcb.dbuf   = 0;
+	OS_dcb.dtimlo = 0x1f;
+	OS_dcb.dbyt   = 0;
+	OS_dcb.daux1  = 0;
+	OS_dcb.daux2  = 0;
+	sio();
+
+	hex("dcb", DCB_ADD);
+	hex("vst", OS_dvstat);
+
 }
 
 //interrupt(hardware_none) void ih() {

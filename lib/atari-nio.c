@@ -78,7 +78,7 @@ uint8_t nstatus(uint8_t* devicespec) {
 	OS_dcb.dstats = 0x40;
 	OS_dcb.dbuf   = OS_dvstat;
 	OS_dcb.dtimlo = 0x1f;
-	OS_dcb.dbyt   = 4; // found 1 bug!
+	OS_dcb.dbyt   = 4; // the dvstat block is 4 bytes.
 	OS_dcb.daux1  = 0;
 	OS_dcb.daux2  = 0;
 	siov();
@@ -97,7 +97,7 @@ uint8_t nread(uint8_t* devicespec, uint8_t* buf, uint16_t len) {
 	OS_dcb.dtimlo = 0x1f;
 	OS_dcb.dbyt   = len;
 	OS_dcb.daux1  = <len;
-	OS_dcb.daux1  = >len;
+	OS_dcb.daux2  = >len;
 	siov();
 
 	if (OS_dcb.dstats != 1) {
