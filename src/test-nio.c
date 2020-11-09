@@ -99,8 +99,6 @@ void main() {
 			// reset for next loop
 			trip = 0;
 			PIA.pactl |= 1;
-			
-			running = 0;
 		}
 		
 	}

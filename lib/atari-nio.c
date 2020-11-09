@@ -70,6 +70,9 @@ uint8_t nclose(uint8_t* devicespec) {
 }
 
 uint8_t nstatus(uint8_t* devicespec) {
+	// Clear the buffer as it appears to be retaining the old values.
+	// for (uint8_t i: 0..3) *(OS_dvstat + i) = 0;
+
 	uint8_t unit = nunit(devicespec);
 
 	OS_dcb.ddevic = 0x71;

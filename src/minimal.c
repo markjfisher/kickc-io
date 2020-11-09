@@ -31,40 +31,33 @@ char const * OUT    = 0x3000;
 // our flag for data
 volatile char trip = 0;
 
-char *url = "N:TNFS://192.168.1.97/test2.txt";
-// char *url = "N:HTTPS://API.IPIFY.ORG/";
-// char *url = "N:TCP://BBS.FOZZTEXX.NET/";
+char *url1 = "N:TNFS://192.168.1.97/test2.txt";
+char *url2 = "N:HTTPS://API.IPIFY.ORG/?format=json";
+char *url3 = "N:HTTP://API.IPIFY.ORG/?format=json";
+char *url4 = "N:HTTPS://BBC.CO.UK/";
+char *url5 = "N:TCP://BBS.FOZZTEXX.NET/";
 
 char trans = 3;
 char result;
-char buf[16];
 word dataLen;
 word prevV;
 
 void main() {
 	clearOut();
-	nio();
 
-	//result = nopen(url, 12, trans);
-	//print_stat(); print("\n");
-	//if (result != 1) {
-		//print("Error opening: "); print_error(result);
-	//} else {
-		//result = nstatus(url);
-		//print_stat(); print("\n");
+	*OS_shflok = 0;
+	*OS_lmargn = 0;
 
-		//// ignore the buffer size, just read 14 bytes.
-		//result = nread(url, buf, 14);
-		//if (result != 1) {
-			//print("Error reading: "); print_error(result);
-			//print_stat(); print("\n");
-		//} else {
-			//print("buf: "); printl(buf, 14); print("\n");
-		//}
+	// some personal preferences for keyboard repeats :)
+	*OS_krpdel = 10;
+	*OS_keyrep = 4;
 
-	//}
+	nio(url1);
+	nio(url2);
+	nio(url3);
+	nio(url4);
+	nio(url5);
 
-	//result = nclose(url);
 }
 
 void hex(char *name, char *add) {
@@ -74,11 +67,6 @@ void hex(char *name, char *add) {
 	uctoa(add[1], tmp, 16); print("1:$"); print(tmp); print(" ");
 	uctoa(add[2], tmp, 16); print("2:$"); print(tmp); print(" ");
 	uctoa(add[3], tmp, 16); print("3:$"); print(tmp); print("\n");
-	//print(name); print(" ");
-	//uctoa(add[4], tmp, 16); print("4:$"); print(tmp); print(" ");
-	//uctoa(add[5], tmp, 16); print("5:$"); print(tmp); print(" ");
-	//uctoa(add[6], tmp, 16); print("6:$"); print(tmp); print(" ");
-	//uctoa(add[7], tmp, 16); print("7:$"); print(tmp); print("\n");
 }
 
 void clearOut() {
@@ -99,29 +87,28 @@ void print_error(uint8_t err) {
 	print("\n");
 }
 
-void nio() {
-	print("nio\n");
+void nio(char const *url) {
+	print("u:"); print(url); print("\n");
 	result = nopen(url, 4, trans);
-	hex("dcb", DCB_ADD);
-	hex("vst", OS_dvstat);
+	if (result != 1) {
+		print("could not open url! "); print_error(result);
+	} else {
+		nstatus(url);
+		hex("status dvstat:", OS_dvstat);
+	}
 
-	result = nstatus(url);
-	hex("dcb", DCB_ADD);
-	hex("vst", OS_dvstat);
-
-	dataLen = *((word *) OS_dvstat);
-	result = nread(url, OUT, dataLen);
-	hex("dcb", DCB_ADD);
-	hex("vst", OS_dvstat);
-	print("out: "); printl(OUT, dataLen); print("\n");
+	//dataLen = *((word *) OS_dvstat);
+	//result = nread(url, OUT, dataLen);
+	//hex("dcb", DCB_ADD);
+	//hex("vst", OS_dvstat);
+	// print("out: "); printl(OUT, dataLen); print("\n");
 
 	result = nclose(url);
-	hex("dcb", DCB_ADD);
-	hex("vst", OS_dvstat);
 
 }
 
 void direct() {
+	char *url = "N:HTTPS://API.IPIFY.ORG/";
 	//////////////////////////////////////////////////////
 	// DIRECT
 	//////////////////////////////////////////////////////
@@ -180,6 +167,7 @@ void direct() {
 }
 
 void dcb() {
+	char *url = "N:HTTPS://API.IPIFY.ORG/";
 	//////////////////////////////////////////////////////
 	// OS DCB
 	//////////////////////////////////////////////////////
@@ -253,9 +241,9 @@ void dcb() {
 
 }
 
-//interrupt(hardware_none) void ih() {
-	//trip = 1;
-	//asm {
-		//pla
-	//}
-//}
+interrupt(hardware_none) void ih() {
+	trip = 1;
+	asm {
+		pla
+	}
+}

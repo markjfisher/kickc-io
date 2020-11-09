@@ -7,9 +7,24 @@
 // (1/60 second = 1 jiffy) until it reaches #0xFF, then increments 0x13, etc.
 char * const RTCLOK = 0x12;
 
+// Left margin
+char const * OS_lmargn = 0x52;
+
+// Right margin
+char const * OS_rmargn = 0x53;
 
 // = $0202/$0203    PROCEED LINE IRQ VECTOR
 void() ** const VPRCED = 0x0202;
+
+// Shift Lock, 1 = on, 0 = off
+char const * OS_shflok = 0x02BE;
+
+// Keyboard Delay Rate - makes keys repeat sooner
+char const * OS_krpdel = 0x02D9;
+
+// Keyboard Repeat Rate - makes keys appear faster
+char const * OS_keyrep = 0x02DA;
+
 
 // 0x2EA to 0x2ED = DVSTAT
 // Four device status registers used by the I/O status operation.
