@@ -1,6 +1,4 @@
 #include "atari-os.h"
-#include "atari-pia.h"
-#include "atari-antic.h"
 
 // Internal realtime clock at 0x12, 0x13, 0x14.
 // Location 0x14 increments every stage 1 VBLANK interrupt

@@ -7,7 +7,7 @@
 #include <6502.h>
 #include "atari-nio.h"
 #include "atari-system.h"
-#include "conio.h"
+#include "conio-plus.h"
 
 volatile __ma char trip = 0;
 

@@ -6,6 +6,11 @@
 ### In order to override defaults - values can be assigned to the variables ###
 ###############################################################################
 
+# Set sources to compile, pass in as a variable to override default
+# e.g. "make SOURCES=src/foo.c"
+# Default: all c files in SRCDIR
+SOURCES :=
+
 # Additional C compiler flags and options.
 # Default: none
 CFLAGS  = -Ocoalesce -Sl
@@ -29,6 +34,16 @@ INCLUDES :=
 # Additional assembler flags and options that will be passed to kick assembler.
 # Default: none
 ASMFLAGS :=
+
+# Verbosity flags for kickc
+VERBOSITY := -vasmout
+
+# Emulator command, supported includes: wine_altirra, ... TODO add others if windows support reinstated (e.g. win_atari800, win_altirra)
+# Default: wine_altirra (the wine emulator on linux to run altirra)
+EMUCMD :=
+
+# Set the emulator target to run. No default. Point it to absolute path of binary the emulator needs to run
+EMURUN :=
 
 # Path to the directory containing main C source, and additional if not in lib subfolders.
 # Default: src
@@ -113,7 +128,12 @@ endif
 
 # Default emulator commands and options for particular targets.
 # Set EMUCMD to override.
-atari_EMUCMD := atari800 -windowed -xl -pal -nopatchall -run
+win_atari800 := atari800 -windowed -xl -pal -nopatchall -run
+wine_altirra := wine $(ALTIRRA_HOME)/Altirra64.exe
+
+ifeq ($(EMUCMD),)
+  EMUCMD := wine_altirra
+endif
 
 MKDIR = mkdir -p $1
 RMDIR = rmdir $1
@@ -127,8 +147,10 @@ define NEWLINE
 endef
 # Note: Do not remove any of the two empty lines above !
 
-# Set SOURCES to all c files in src dir. They must have main() methods or they will fail to compile
-SOURCES := $(wildcard $(SRCDIR)/*.c)
+# If unset, set SOURCES to all c files in src dir. They must have main() methods or they will fail to compile
+ifeq ($(SOURCES),)
+  SOURCES := $(wildcard $(SRCDIR)/*.c)
+endif
 BINS := $(subst $(SRCDIR),$(BUILDDIR),$(SOURCES:.c=.$(OUT_EXT)))
 
 # Add to LIBS something like 'foo.lib src/bar.lib'.
@@ -146,7 +168,7 @@ ASMFLAGS_PARAM := $(foreach a,$(subst $(COMMA),$(SPACE),$(ASMFLAGS)),-Xassembler
 # Start of targets
 
 .SUFFIXES:
-.PHONY: all clean
+.PHONY: all clean wine_altirra
 
 all: $(BINS)
 
@@ -159,8 +181,20 @@ $(BINDIR):
 vpath %.c $(SRCDIR)
 
 $(BUILDDIR)/%.$(OUT_EXT): $(SRCDIR)/%.c | $(BUILDDIR)
-	$(CC) -a $(LIBS_PARAM) $(INCLUDES_PARAM) $(ASMFLAGS_PARAM) -target=$(TARGET) -targetdir=$(TARGET_DIR) $(CFLAGS) -odir=$(BUILDDIR) -o $(notdir $@) $< && \
-	cp $(BUILDDIR)/$(notdir $@) $(BINDIR)/
+	@echo "======================================================================"
+	@echo "Building $@"
+	@echo "======================================================================"
+	$(CC) -a $(LIBS_PARAM) $(VERBOSITY) $(INCLUDES_PARAM) $(ASMFLAGS_PARAM) -target=$(TARGET) -targetdir=$(TARGET_DIR) $(CFLAGS) -odir=$(BUILDDIR) -o $(notdir $@) $< && cp $(BUILDDIR)/$(notdir $@) $(BINDIR)/
+	@echo "Creating Altirra debug file: $(@:.$(OUT_EXT)=.atdbg)"
+	@echo ".sourcemode on" > $(@:.$(OUT_EXT)=.atdbg)
+	@echo ".bc" >> $(@:.$(OUT_EXT)=.atdbg)
+	@echo ".unloadsym kerneldb" >> $(@:.$(OUT_EXT)=.atdbg)
+	@grep '^al ' $(@:.$(OUT_EXT)=.vs) | sed 's#al C:##g' | awk '{printf("%s %s\n", substr($$2, 2), $$1)}' | sort | awk '{printf("ya %s %06s\n", $$1, $$2)}' >> $(@:.$(OUT_EXT)=.atdbg)
+	@grep "^break" $(@:.$(OUT_EXT)=.vs) | sed 's#break #bp #g' >> $(@:.$(OUT_EXT)=.atdbg)
+
+# requires ALTIRRA_HOME set, and wine on the path.
+wine_altirra:
+	$($(EMUCMD)) "Z:$(subst /,\,$(EMURUN))"
 
 clean:
-	$(call RMFILES,$(BUILDDIR)/*)
+	@$(call RMFILES,$(BUILDDIR)/*)

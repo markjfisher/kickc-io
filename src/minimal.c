@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "atari-mem.h"
 #include "atari-nio.h"
+#include "conio-plus.h"
 
 char const * DVSTAT = 0x02EA;
 char const * EXTERR = 0x02ED;

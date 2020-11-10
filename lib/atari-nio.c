@@ -3,8 +3,6 @@
 #include "atari-sio.h"
 #include "atari-mem.h"
 
-#include "conio.h"
-
 uint8_t nunit(uint8_t* devicespec) {
 	uint8_t unit = 1;
 
